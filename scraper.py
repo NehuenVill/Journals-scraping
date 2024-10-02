@@ -2,6 +2,9 @@ from dotenv import load_dotenv
 import os
 import requests
 from bs4 import BeautifulSoup
+from common import add_new_items_to_feed
+from concurrent.futures import ThreadPoolExecutor
+import traceback
 
 main_r_json = {
   "url": "https://www.wsj.com/news/markets/oil-gold-commodities-futures?mod=md_cmd_news_all",
@@ -156,6 +159,8 @@ def get_secret_data():
     email = os.getenv('WSJ_EMAIL')
     passw = os.getenv('WSJ_PASS')
 
+    print("Loaded environment variables")
+
     return email, passw, key
 
 def create_json(r_type:str, email:str=None, passw:str=None, article_url:str=None) -> dict:
@@ -174,12 +179,16 @@ def create_json(r_type:str, email:str=None, passw:str=None, article_url:str=None
 
 def scrape_request(key:str, r_json:dict):
 
+    print("\nStarting request")
+
     api_response = requests.post(
     "https://api.zyte.com/v1/extract",
     auth = (key, ""),
     json = r_json
     )   
     response = api_response.json()
+
+    print("\nRequest finished Successfuly")
 
     return response
 
@@ -200,8 +209,7 @@ def parse_articles_raw(articles):
 
 def extract_articles_url(html_response:str) -> list[str]:
 
-    soup = BeautifulSoup(html_response,"html.parser")
-    soup.find("div", id="latest-stories")
+    soup = BeautifulSoup(html_response["browserHtml"],"html.parser")
     all_articles = soup.find("div", id="latest-stories").find_all("a")
 
     articles_url = parse_articles_raw(all_articles)
@@ -213,8 +221,22 @@ def get_all_articles_url() -> list[str]:
     _,_,key = get_secret_data()
     r_json = create_json("main")
 
-    html_response = scrape_request(key, r_json)
-    articles_url = extract_articles_url(html_response)
+    while True:
+
+        try:
+            html_response = scrape_request(key, r_json)
+            articles_url = extract_articles_url(html_response)
+            break
+
+        except Exception as e:
+
+            print("Error getting articles URL, trying again...")
+
+            continue
+
+    print("SUCCESSFULY EXTRACTED ARTICLES URL\n")
+    print("-"*70)
+    print("\n")
 
     return articles_url
 
@@ -228,7 +250,7 @@ def get_article_content(s):
 
 def extract_article_information(html_response:str, url:str) -> dict:
 
-    soup = BeautifulSoup(html_response,"html.parser")
+    soup = BeautifulSoup(html_response["browserHtml"],"html.parser")
     
     title = get_article_title(soup)
     content = get_article_content(soup)
@@ -244,11 +266,49 @@ def get_article_information(article_url:str) -> dict:
     email,passw,key = get_secret_data()
     r_json = create_json("article", email, passw,article_url)
 
-    html_response = scrape_request(key, r_json)
-    article_information = extract_article_information(html_response, article_url)
+    while True:
+
+        try:
+
+            html_response = scrape_request(key, r_json)
+            article_information = extract_article_information(html_response, article_url)
+            break
+
+        except Exception as e:
+
+            print("Error getting articles infromation, trying again...")
+            continue
+
+    print("SUCCESSFULY EXTRACTED ARTICLES INFORMATION\n")
+    print("-"*70)
+    print("\n")
 
     return article_information
 
-def upload_to_feed():
+def excecute_scraping() -> list[dict]:
 
-    pass
+    print("[Articles Url] Starting scraping process")
+
+    articles_url = get_all_articles_url()
+ 
+    all_articles_info = []
+
+    print("[Articles Info] Starting scraping process")
+
+    with ThreadPoolExecutor() as executor:
+        results = executor.map(get_article_information, articles_url[1:3])
+
+        all_articles_info = list(results)
+
+    return all_articles_info
+
+def run():
+
+    all_articles_info = excecute_scraping()
+
+    add_new_items_to_feed("RSS/feed.xml", all_articles_info)
+
+
+if __name__ == "__main__":
+
+    run()
