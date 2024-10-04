@@ -293,6 +293,8 @@ def excecute_scraping() -> list[dict]:
  
     all_articles_info = []
 
+    print(articles_url)
+
     print("[Articles Info] Starting scraping process")
 
     with ThreadPoolExecutor() as executor:

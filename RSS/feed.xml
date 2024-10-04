@@ -1,9 +1,48 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0">
-  <channel>
-    <title>Title</title>
-    <link>https://your-website.com</link>
-    <description>Your feed description</description>
-    <language>en-us</language>
-  </channel>
+ <channel>
+  <title>
+   Title
+  </title>
+  <link>
+   https://your-website.com
+  </link>
+  <description>
+   Your feed description
+  </description>
+  <language>
+   en-us
+  </language>
+  <item>
+   <title>
+    The U.S. Corn Crop Is Great. Farmers’ Finances, Not So Much.
+   </title>
+   <link>
+    https://www.wsj.com/finance/commodities-futures/a-natural-gas-glut-is-forcing-drillers-to-dial-backagain-ff2e56a1
+   </link>
+   <content>
+    The U.S. farm belt is headed for a bumper crop. Few farmers are celebrating, though.Grain prices, under pressure since the Covid commodity boom crested, have fallen further in 2024. Rainfall has been ample across farm country for the first time in years, staving off the drought that has plagued the central U.S. and putting Midwestern corn and soybean harvests on track to set records. That is intensifying what was already shaping up as a dismal year financially on the farm. Budgets drawn up in the spring are no longer viable. Persistently high costs for farm essentials such as seeds and fertilizer are gobbling up revenue.It is a return to leaner prepandemic times for many farmers. Prices for corn and soybeans were rangebound in the second half of the 2010s, weighing on farm returns. The record-high prices in 2021 and 2022 gave farmers a boost, but momentum has once again turned against them.Now, some farmers are being forced to consider actions they would rather avoid. That can mean using less fungicide and fertilizer—and accepting more issues with pests and lower crop yields—or delaying capital investments that would boost productivity and profits over time.Illinois grain farmer Steve Nightingale is clearing out space for what he expects to be high yields. Photo: Lia Nightingale“The way the market is now, I think most people are pretty nervous,” said Steve Nightingale, who farms 1,700 acres of corn and soybeans in Henry County, Ill. Corn and soybeans are both trading at levels last seen in 2020. The producer-price index for corn, reflecting the change in the selling prices received by domestic producers for their output, has halved since hitting a recent high two years ago, thanks in part to strong production in Brazil. Nightingale is in the process of selling leftover crops from last year to make room for what he expects to be a bountiful harvest. But at his local grain elevator, he recently got $3.69 a bushel for last year’s corn—14% below the $4.30 he needs to break even. He isn’t alone. The sharp decline in crop prices is the chief reason that budgets drawn up by farmers at the start of the spring planting season are now blown, with lower commodity prices no longer offsetting higher production expenses. Fertilizer prices soared to record highs in the wake of the Russia-Ukraine war, following a big uptick in prices for natural gas. Other costs include hiring workers, purchasing seeds and paying for fuel. “We’re using up the reserves we have,” said Mat Muirheid, who farms 1,600 acres of corn and soybeans in Macon County, Ill. Muirheid said that he plans on tightly budgeting for planting next year, limiting the supplies he purchases and planting more soybeans than corn because they are less fertilizer-intensive.The cost of rented land for farming has risen in recent years. Photo: Austin WeidhunerHe’s also delaying buying new machinery. Muirheid said that he will continue to use his 15-year-old combine and his 20-year-old planter. Deere &amp; Co.this month reported that third-quarter equipment sales in its production and precision agriculture division fell 25% from a year earlier. The cost to rent land to farm on has also climbed in recent years, becoming a bigger portion of farm expenses. “Rent has gone up every year for a long time,” said Muirheid.In February, the USDA forecast that net farm incomes would drop by a quarter this year. Economists at the University of Illinois say farmers in the state are likely to lose as much as $118 per acre of corn and $81 an acre for soybeans. The pain could be even worse if prices don’t rebound.Advertisement
+
+
+Plentiful rainfall has relieved the drought felt by many farmers in the Midwest. Photo: Jim vondruska/ReutersTo be sure, weather is unpredictable, and any major event could reset what the economics look like for farmers. Any geopolitical volatility affecting the U.S. or a major trading partner such as China—that increasingly appears to be decoupling from reliance on U.S. agricultural exports—could spark a surge in grain prices.But that aside, the growing presence of Brazil on the world agricultural market and the steady output of Russia are expected to keep pressure on prices and on U.S. farmers. SHARE YOUR THOUGHTSWhat’s your outlook on the future of the grain market? Join the conversation below.“Between Brazil and Russia, they’re producing grain at a rate that is more than the world will ever need,” said Rob Fox, lead economist with agricultural lender CoBank’s research department. “The long-term picture looks not great.”The pain facing farmers is ironic because few have seen such perfect growing conditions in an age that is coming to be synonymous with extreme weather events and other disasters.Scouts on Pro Farmer’s Midwest Crop Tour this week also reported mostly healthy-looking crops across seven states—South Dakota, Nebraska, Iowa, Illinois, Minnesota, Indiana and Ohio.“I’ve been here 42 years, and I’ve never had a year with a crop with no stress,” said Kim Craig, a merchandiser with the Danvers Farmers Elevator Co. in Deer Creek, Ill., which operates grain elevators in four locations in rural Illinois.  Soybeans are loaded into a planter on an Ohio farm. Photo: Joshua A. Bickel/Associated PressWrite to Kirk Maltais at kirk.maltais@wsj.com
+   </content>
+   <extractionDate>
+    2024-10-03 21:02:27
+   </extractionDate>
+  </item>
+  <item>
+   <title>
+    The U.S. Corn Crop Is Great. Farmers’ Finances, Not So Much.
+   </title>
+   <link>
+    https://www.wsj.com/finance/commodities-futures/the-u-s-corn-crop-is-great-farmers-finances-not-so-much-f9bea8f0
+   </link>
+   <content>
+    The U.S. farm belt is headed for a bumper crop. Few farmers are celebrating, though.Grain prices, under pressure since the Covid commodity boom crested, have fallen further in 2024. Rainfall has been ample across farm country for the first time in years, staving off the drought that has plagued the central U.S. and putting Midwestern corn and soybean harvests on track to set records.
+   </content>
+   <extractionDate>
+    2024-10-03 21:02:27
+   </extractionDate>
+  </item>
+ </channel>
 </rss>

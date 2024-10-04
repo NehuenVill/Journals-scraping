@@ -1,28 +1,29 @@
-import feedparser
-from feedgen.feed import FeedGenerator
 from datetime import datetime
+from bs4 import BeautifulSoup
+import xml.etree.ElementTree as ET
 import pytz
 import os
+
 
 def get_feed(feed_file_path):
 
     if os.path.exists(feed_file_path):
-        with open(feed_file_path, 'r', encoding='utf-8') as feed_file:
-            existing_feed = feed_file.read()
+        tree = ET.parse(feed_file_path)
     else:
-        existing_feed = None
+        tree = None
 
-    return existing_feed
+    return tree
 
-def parse_feed(existing_feed):
+def parse_feed(tree):
 
-    parsed_feed = feedparser.parse(existing_feed) if existing_feed else None
+    root = tree.getroot()
+    channel = root.find('channel')
 
-    return parsed_feed
+    return root,channel
 
-def already_exists_in_feed(parsed_feed, new_item):
+def already_exists_in_feed(channel, new_item):
 
-    existing_links = [entry.link for entry in parsed_feed.entries]
+    existing_links = {item.find('link').text for item in channel.findall('item')}
     
     return new_item["link"] in existing_links
 
@@ -62,34 +63,53 @@ def create_default_feed(fg):
 
     return fg
 
-def write_to_file(feed_file_path, fg):
+def write_to_file(feed_file_path, root):
 
-    with open(feed_file_path, 'w', encoding='utf-8') as updated_feed_file:
-        updated_feed_file.write(fg.rss_str(pretty=True).decode('utf-8'))
+    pretty_xml = prettify_xml(root)
+    with open(feed_file_path, "w", encoding="utf-8") as f:
+        f.write(pretty_xml)
 
-def add_new_item(fg, new_item, feed_file_path):
+def add_new_item(root, channel, raw_item, feed_file_path):
 
-    fe = fg.add_entry()
-    fe.title(new_item["title"])
-    fe.link(href=new_item["link"])
-    fe.extension("content", new_item["content"])
-    extraction_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    fe.extension('extractionDate', extraction_date)
+    new_item = ET.SubElement(channel, 'item')
 
-    write_to_file(feed_file_path, fg)
+    title = ET.SubElement(new_item, 'title')
+    title.text = raw_item["title"]
+
+    link = ET.SubElement(new_item, 'link')
+    link.text = raw_item["link"]
+
+    content = ET.SubElement(new_item, 'content')
+    content.text = raw_item["content"]
+
+    date = ET.SubElement(new_item, 'extractionDate')
+    date.text = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    write_to_file(feed_file_path, root)
+
+def prettify_xml(root):
+    xml_data = ET.tostring(root, encoding='utf-8', method='xml')
+    soup = BeautifulSoup(xml_data, 'xml')
+    return soup.prettify()
 
 def add_new_items_to_feed(feed_file_path:str, new_items:list):
 
     for new_item in new_items:
 
-        parsed_feed = parse_feed(get_feed(feed_file_path))
+        tree = get_feed(feed_file_path)
 
-        if already_exists_in_feed(parsed_feed, new_item):
+        root, channel = parse_feed(tree)
+
+        if already_exists_in_feed(channel, new_item):
+
+            print(f"{new_item['link']} Already exists in feed.")
 
             continue
 
-        add_new_item(start_feed_with_previous_data(parsed_feed),new_item, feed_file_path)
+        add_new_item(root, channel, new_item, feed_file_path)
+
+        print(f"[SUCCESS] {new_item['link']} uploaded to the feed.")
 
 if __name__ == "__main__":
 
-    add_new_items_to_feed("RSS/feed.xml", [{"title":"atr", "link":"www.link.com", "content": "sample_1"}])
+    add_new_items_to_feed("RSS/feed.xml", [{"title":"atrff", "link":"www.asaassASDsddsd.com", "content": "sample_12"}])
