@@ -4,7 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 from common import add_new_items_to_feed
 from concurrent.futures import ThreadPoolExecutor
+from concurrent import futures
 import traceback
+from base64 import b64decode
+from random import randint
+from functools import partial
 
 main_r_json = {
   "url": "https://www.wsj.com/news/markets/oil-gold-commodities-futures?mod=md_cmd_news_all",
@@ -146,6 +150,9 @@ article_r_json = {
       },
       "timeout": 5,
       "onError": "continue"
+    },
+    {
+      "action": "scrollBottom"
     }
   ],
   "javascript": True,
@@ -169,7 +176,7 @@ def create_json(r_type:str, email:str=None, passw:str=None, article_url:str=None
 
         article_r_json["url"] = article_url
         article_r_json["actions"][4]["text"] = email
-        article_r_json["actions"][7]["text"] = passw
+        article_r_json["actions"][7]["text"] = passw.replace("\\", "")
 
         return article_r_json
 
@@ -203,7 +210,7 @@ def parse_articles_raw(articles):
             article_links.append(article.attrs["href"])
 
     article_links = set(article_links)
-    article_links = tuple(article_links)
+    article_links = list(article_links)
 
     return article_links
 
@@ -225,8 +232,6 @@ def get_all_articles_url() -> list[str]:
 
         try:
             html_response = scrape_request(key, r_json)
-            print(html_response)
-            print(html_response["actions"])
             articles_url = extract_articles_url(html_response)
 
             break
@@ -249,11 +254,23 @@ def get_article_title(s):
 
 def get_article_content(s):
 
-    return s.find("section").text
+    section = s.find("section")
+
+    content = ""
+
+    for p in section.find_all("p"):
+
+      content += f"{p.text} \n"
+
+    return content
 
 def extract_article_information(html_response:str, url:str) -> dict:
 
     soup = BeautifulSoup(html_response["browserHtml"],"html.parser")
+
+    if soup.find("div", id="cx-snippet-overlay-container"):
+
+      raise Exception("Was not able to log in correctly")
     
     title = get_article_title(soup)
     content = get_article_content(soup)
@@ -264,9 +281,10 @@ def extract_article_information(html_response:str, url:str) -> dict:
         "link": url
     }
 
-def get_article_information(article_url:str) -> dict:
+def get_article_information(article_url:str, r:list) -> dict:
 
     email,passw,key = get_secret_data()
+    print(f"Login info: {email}, {passw}, {key}")
     r_json = create_json("article", email, passw,article_url)
 
     while True:
@@ -274,17 +292,22 @@ def get_article_information(article_url:str) -> dict:
         try:
 
             html_response = scrape_request(key, r_json)
+
             article_information = extract_article_information(html_response, article_url)
+            print(article_information)
             break
 
         except Exception as e:
 
+            print(f"Error: {e}")
             print("Error getting articles infromation, trying again...")
             continue
 
     print("SUCCESSFULY EXTRACTED ARTICLES INFORMATION\n")
     print("-"*70)
     print("\n")
+
+    r.append(article_information)
 
     return article_information
 
@@ -294,16 +317,36 @@ def excecute_scraping() -> list[dict]:
 
     articles_url = get_all_articles_url()
  
-    all_articles_info = []
+    while True:
+
+      if articles_url:
+
+        break
+
+      else:
+
+        articles_url = get_all_articles_url()
 
     print("[Articles Info] Starting scraping process")
 
     with ThreadPoolExecutor() as executor:
-        results = executor.map(get_article_information, articles_url[1:3])
+        jobs = []
+        all_articles_info = []
 
-        all_articles_info = list(results)
+        print(articles_url)
+
+        for url in articles_url[1:3]:
+
+          jobs.append(executor.submit(get_article_information, url, all_articles_info))
+          print(url)
+
+        for job in futures.as_completed(jobs):
+            result = job.result()
+            print(result)
+            all_articles_info.append(result)
 
     return all_articles_info
+
 
 def run():
 

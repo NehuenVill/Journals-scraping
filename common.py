@@ -112,4 +112,4 @@ def add_new_items_to_feed(feed_file_path:str, new_items:list):
 
 if __name__ == "__main__":
 
-    add_new_items_to_feed("RSS/feed.xml", [{"title":"atrff", "link":"www.asaassASDsddsd.com", "content": "sample_12"}])
+    add_new_items_to_feed("RSS/feed.xml", [{"title":"atrfff", "link":"www.agsaassASDsddsd.com", "content": "sample1_12"}])
