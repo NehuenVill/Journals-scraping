@@ -9,6 +9,7 @@ import traceback
 from base64 import b64decode
 from random import randint
 from functools import partial
+import threading
 
 main_r_json = {
   "url": "https://www.wsj.com/news/markets/oil-gold-commodities-futures?mod=md_cmd_news_all",
@@ -158,6 +159,8 @@ article_r_json = {
   "javascript": True,
 }
 
+lock = threading.Lock()
+
 def get_secret_data():
 
     load_dotenv()
@@ -170,19 +173,19 @@ def get_secret_data():
 
     return email, passw, key
 
-def create_json(r_type:str, email:str=None, passw:str=None, article_url:str=None) -> dict:
+def create_json(r_type:str, data_json:dict, email:str=None, passw:str=None, article_url:str=None) -> dict:
 
     if r_type == "article":
 
-        article_r_json["url"] = article_url
-        article_r_json["actions"][4]["text"] = email
-        article_r_json["actions"][7]["text"] = passw.replace("\\", "")
+        data_json["url"] = article_url
+        data_json["actions"][4]["text"] = email
+        data_json["actions"][7]["text"] = passw.replace("\\", "")
 
-        return article_r_json
+        return data_json
 
     else:
 
-        return main_r_json
+        return data_json
 
 def scrape_request(key:str, r_json:dict):
 
@@ -226,7 +229,7 @@ def extract_articles_url(html_response:str) -> list[str]:
 def get_all_articles_url() -> list[str]:
 
     _,_,key = get_secret_data()
-    r_json = create_json("main")
+    r_json = create_json("main", main_r_json)
 
     while True:
 
@@ -284,32 +287,35 @@ def extract_article_information(html_response:str, url:str) -> dict:
 def get_article_information(article_url:str, r:list) -> dict:
 
     email,passw,key = get_secret_data()
-    print(f"Login info: {email}, {passw}, {key}")
-    r_json = create_json("article", email, passw,article_url)
 
-    while True:
+    global article_r_json
 
-        try:
+    with lock:
 
-            html_response = scrape_request(key, r_json)
+        r_json = create_json("article", article_r_json, email, passw,article_url)
 
-            article_information = extract_article_information(html_response, article_url)
-            print(article_information)
-            break
+        while True:
 
-        except Exception as e:
+            try:
 
-            print(f"Error: {e}")
-            print("Error getting articles infromation, trying again...")
-            continue
+                html_response = scrape_request(key, r_json)
 
-    print("SUCCESSFULY EXTRACTED ARTICLES INFORMATION\n")
-    print("-"*70)
-    print("\n")
+                article_information = extract_article_information(html_response, article_url)
+                break
 
-    r.append(article_information)
+            except Exception as e:
 
-    return article_information
+                print(f"Error: {e}")
+                print("Error getting articles infromation, trying again...")
+                continue
+
+        print("SUCCESSFULY EXTRACTED ARTICLES INFORMATION\n")
+        print("-"*70)
+        print("\n")
+
+        r.append(article_information)
+
+        return article_information
 
 def excecute_scraping() -> list[dict]:
 
