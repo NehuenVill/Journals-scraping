@@ -1,7 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
-import pytz
 import os
 
 
@@ -20,12 +19,6 @@ def parse_feed(tree):
     channel = root.find('channel')
 
     return root,channel
-
-def already_exists_in_feed(channel, new_item):
-
-    existing_links = {item.find('link').text for item in channel.findall('item')}
-    
-    return new_item["link"] in existing_links
 
 def start_feed_with_previous_data(parsed_feed):
 
@@ -100,16 +93,44 @@ def add_new_items_to_feed(feed_file_path:str, new_items:list):
 
         root, channel = parse_feed(tree)
 
-        if already_exists_in_feed(channel, new_item):
-
-            print(f"{new_item['link']} Already exists in feed.")
-
-            continue
-
         add_new_item(root, channel, new_item, feed_file_path)
 
         print(f"[SUCCESS] {new_item['link']} uploaded to the feed.")
 
+def get_links_from_xml(xml_file_path):
+    tree = ET.parse(xml_file_path)
+    root = tree.getroot()
+
+    links = []
+
+    for item in root.findall(".//item"):
+        link = item.find('link')
+        if link is not None:
+            links.append(link.text.replace("\n", "").strip())
+
+    return set(links)
+
+
+def delete_old_items_from_xml(xml_file, days_old=0):
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    current_date = datetime.now()
+
+    cutoff_date = current_date - timedelta(days=days_old)
+
+    for channel in root.findall('channel'):
+        for item in channel.findall('item'):
+            pub_date_text = item.find('extractionDate').text.replace("\n", "").strip()
+            pub_date = datetime.strptime(pub_date_text, "%Y-%m-%d %H:%M:%S")
+
+            if pub_date < cutoff_date:
+                channel.remove(item)
+
+    tree.write(xml_file)
+
 if __name__ == "__main__":
 
-    add_new_items_to_feed("RSS/feed.xml", [{"title":"atrfff", "link":"www.agsaassASDsddsd.com", "content": "sample1_12"}])
+    # add_new_items_to_feed("RSS/feed.xml", [{"title":"atrfff", "link":"www.agsaassASDsddsd.com", "content": "sample1_12"}])
+    # print(get_links_from_xml("RSS/feed.xml"))
+    delete_old_items_from_xml("RSS/feed.xml")

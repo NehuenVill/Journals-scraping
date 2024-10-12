@@ -2,13 +2,9 @@ from dotenv import load_dotenv
 import os
 import requests
 from bs4 import BeautifulSoup
-from common import add_new_items_to_feed
+from common import add_new_items_to_feed, get_links_from_xml
 from concurrent.futures import ThreadPoolExecutor
 from concurrent import futures
-import traceback
-from base64 import b64decode
-from random import randint
-from functools import partial
 import threading
 
 main_r_json = {
@@ -331,7 +327,9 @@ def excecute_scraping() -> list[dict]:
 
       else:
 
-        articles_url = get_all_articles_url()
+        articles_url = set(get_all_articles_url())
+
+    new_articles_url = articles_url - get_links_from_xml("RSS/feed.xml")
 
     print("[Articles Info] Starting scraping process")
 
@@ -339,9 +337,9 @@ def excecute_scraping() -> list[dict]:
         jobs = []
         all_articles_info = []
 
-        print(articles_url)
+        print(new_articles_url)
 
-        for url in articles_url[1:3]:
+        for url in new_articles_url:
 
           jobs.append(executor.submit(get_article_information, url, all_articles_info))
           print(url)
