@@ -111,7 +111,7 @@ def get_links_from_xml(xml_file_path):
     return set(links)
 
 
-def delete_old_items_from_xml(xml_file, days_old=0):
+def delete_old_items_from_xml(xml_file, days_old=3):
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
@@ -131,6 +131,6 @@ def delete_old_items_from_xml(xml_file, days_old=0):
 
 if __name__ == "__main__":
 
-    # add_new_items_to_feed("RSS/feed.xml", [{"title":"atrfff", "link":"www.agsaassASDsddsd.com", "content": "sample1_12"}])
+    add_new_items_to_feed("RSS/feedxx.xml", [{"title":"atrfff", "link":"www.agsaassASDsddsd.com", "content": "sample1_12"}])
     # print(get_links_from_xml("RSS/feed.xml"))
-    delete_old_items_from_xml("RSS/feed.xml")
+    pass

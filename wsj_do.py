@@ -1,4 +1,4 @@
-from dotenv import load_dotenv
+from datetime import datetime
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -6,6 +6,14 @@ from common import add_new_items_to_feed, get_links_from_xml
 from concurrent.futures import ThreadPoolExecutor
 from concurrent import futures
 import threading
+import logging
+
+
+logging.basicConfig(
+    filename='wsj_log.txt',              
+    level=logging.INFO,               
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 main_r_json = {
   "url": "https://www.wsj.com/news/markets/oil-gold-commodities-futures?mod=md_cmd_news_all",
@@ -159,13 +167,10 @@ lock = threading.Lock()
 
 def get_secret_data():
 
-    load_dotenv()
-
     key = os.getenv('ZYTE_KEY')
     email = os.getenv('WSJ_EMAIL')
     passw = os.getenv('WSJ_PASS')
 
-    print("Loaded environment variables")
 
     return email, passw, key
 
@@ -185,7 +190,6 @@ def create_json(r_type:str, data_json:dict, email:str=None, passw:str=None, arti
 
 def scrape_request(key:str, r_json:dict):
 
-    print("\nStarting request")
 
     api_response = requests.post(
     "https://api.zyte.com/v1/extract",
@@ -194,7 +198,6 @@ def scrape_request(key:str, r_json:dict):
     )   
     response = api_response.json()
 
-    print("\nRequest finished Successfuly")
 
     return response
 
@@ -237,13 +240,7 @@ def get_all_articles_url() -> list[str]:
 
         except Exception as e:
 
-            print("Error getting articles URL, trying again...")
-
             continue
-
-    print("SUCCESSFULY EXTRACTED ARTICLES URL\n")
-    print("-"*70)
-    print("\n")
 
     return articles_url
 
@@ -301,13 +298,7 @@ def get_article_information(article_url:str, r:list) -> dict:
 
             except Exception as e:
 
-                print(f"Error: {e}")
-                print("Error getting articles infromation, trying again...")
                 continue
-
-        print("SUCCESSFULY EXTRACTED ARTICLES INFORMATION\n")
-        print("-"*70)
-        print("\n")
 
         r.append(article_information)
 
@@ -315,7 +306,9 @@ def get_article_information(article_url:str, r:list) -> dict:
 
 def excecute_scraping() -> list[dict]:
 
-    print("[Articles Url] Starting scraping process")
+    logging.info(f"LOGGING TIME: {datetime.now()}",)
+
+    logging.info("[Articles Url] Starting scraping process")
 
     articles_url = set(get_all_articles_url())
  
@@ -331,33 +324,47 @@ def excecute_scraping() -> list[dict]:
 
     new_articles_url = articles_url - get_links_from_xml("RSS/feed.xml")
 
-    print("[Articles Info] Starting scraping process")
+    logging.info("[Articles Url] Extracted successfully\n")
+
+
+    logging.info("[Articles Info] Starting scraping process")
 
     with ThreadPoolExecutor() as executor:
         jobs = []
         all_articles_info = []
 
-        print(new_articles_url)
+        logging.info(new_articles_url)
 
         for url in new_articles_url:
 
           jobs.append(executor.submit(get_article_information, url, all_articles_info))
-          print(url)
+          logging.info(url)
 
         for job in futures.as_completed(jobs):
             result = job.result()
-            print(result)
+            logging.info(result)
             all_articles_info.append(result)
+
+    logging.info("[Articles Info] Extracted successfully\n")
 
     return all_articles_info
 
 
 def run():
 
-    all_articles_info = excecute_scraping()
+    try:
 
-    add_new_items_to_feed("RSS/feed.xml", all_articles_info)
+        all_articles_info = excecute_scraping()
 
+        logging.info("[Adding To Feed] Starting...")
+
+        add_new_items_to_feed("RSS/feed.xml", all_articles_info)
+
+        logging.info("[Adding To Feed] Added successfully\n")
+
+    except Exception as e:
+
+        logging.info(f"[ERROR] Check scraping process, error: {e}")
 
 if __name__ == "__main__":
 
