@@ -280,7 +280,7 @@ def extract_article_information(html_response:str, url:str) -> dict:
         "link": url
     }
 
-def get_article_information(article_url:str, r:list) -> dict:
+def get_article_information(article_url:str) -> dict:
 
     email,passw,key = get_secret_data()
 
@@ -308,8 +308,6 @@ def get_article_information(article_url:str, r:list) -> dict:
         print("SUCCESSFULY EXTRACTED ARTICLES INFORMATION\n")
         print("-"*70)
         print("\n")
-
-        r.append(article_information)
 
         return article_information
 
@@ -349,7 +347,7 @@ def excecute_scraping() -> list[dict]:
             print(result)
             all_articles_info.append(result)
 
-    return all_articles_info
+    return set(all_articles_info)
 
 
 def run():

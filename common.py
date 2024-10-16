@@ -85,7 +85,7 @@ def prettify_xml(root):
     soup = BeautifulSoup(xml_data, 'xml')
     return soup.prettify()
 
-def add_new_items_to_feed(feed_file_path:str, new_items:list):
+def add_new_items_to_feed(feed_file_path:str, new_items:set):
 
     for new_item in new_items:
 

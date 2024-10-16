@@ -277,7 +277,7 @@ def extract_article_information(html_response:str, url:str) -> dict:
         "link": url
     }
 
-def get_article_information(article_url:str, r:list) -> dict:
+def get_article_information(article_url:str) -> dict:
 
     email,passw,key = get_secret_data()
 
@@ -299,8 +299,6 @@ def get_article_information(article_url:str, r:list) -> dict:
             except Exception as e:
 
                 continue
-
-        r.append(article_information)
 
         return article_information
 
@@ -337,12 +335,10 @@ def excecute_scraping() -> list[dict]:
 
         for url in new_articles_url:
 
-          jobs.append(executor.submit(get_article_information, url, all_articles_info))
-          logging.info(url)
+          jobs.append(executor.submit(get_article_information, url))
 
         for job in futures.as_completed(jobs):
             result = job.result()
-            logging.info(result)
             all_articles_info.append(result)
 
     logging.info("[Articles Info] Extracted successfully\n")
@@ -357,6 +353,10 @@ def run():
         all_articles_info = excecute_scraping()
 
         logging.info("[Adding To Feed] Starting...")
+
+        for item in all_articles_info:
+
+            logging.info(f"[Adding To Feed] Adding Item: {item['link']}")
 
         add_new_items_to_feed("RSS/feed.xml", all_articles_info)
 
