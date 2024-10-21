@@ -10,13 +10,13 @@ import logging
 
 
 logging.basicConfig(
-    filename='wsj_log.txt',              
+    filename='nyt_log.txt',              
     level=logging.INFO,               
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
 main_r_json = {
-  "url": "https://www.wsj.com/news/markets/oil-gold-commodities-futures?mod=md_cmd_news_all",
+  "url": "https://www.nytimes.com/topic/subject/oil-and-gasoline",
   "screenshot": True,
   "browserHtml": True,
   "actions": [
@@ -29,22 +29,21 @@ main_r_json = {
     {
       "action": "waitForSelector",
       "selector": {
-        "type": "xpath",
-        "value": "//*[@id='latest-stories']"
+        "type": "css",
+        "value": 'h3'
       },
       "timeout": 5,
       "onError": "continue"
     },
     {
-      "action": "waitForSelector",
-      "selector": {
-        "type": "xpath",
-        "value": "//*[@id='latest-stories']"
-      },
-      "timeout": 5,
+      "action": "waitForTimeout",
+      "timeout": 2,
       "onError": "continue"
     }
-    ]
+    ],
+    "screenshotOptions":{
+      "fullPage" : True
+    }
 }
 
 article_r_json = {
@@ -59,100 +58,24 @@ article_r_json = {
       "onError": "continue"
     },
     {
-      "action": "waitForSelector",
-      "selector": {
-        "type": "xpath",
-        "value": "//a[contains(text(), \"Sign\")]"
-      },
-      "timeout": 5,
-      "onError": "return"
-    },
-    {
-      "action": "click",
-      "selector": {
-        "type": "xpath",
-        "value": "//a[contains(text(), \"Sign\")]"
-      },
-      "onError": "return"
+      "action": "interaction",
+      "id": "Others-www.bloomberg.com",
+      "args": {
+        "email": None,
+        "pass": None
+        }
     },
     {
       "action": "waitForSelector",
       "selector": {
-        "type": "xpath",
-        "value": "//*[@id=\"emailOrUsername\"]"
+        "type": "css",
+        "value": "#story > section > div:nth-child(1) > div > p:nth-child(1)"
       },
       "timeout": 5,
-      "onError": "return"
-    },
-    {
-      "action": "type",
-      "selector": {
-        "type": "xpath",
-        "value": "//*[@id=\"emailOrUsername\"]"
-      },
-      "delay": 0.15,
-      "onError": "return",
-      "text": None
-    },
-    {
-      "action": "keyPress",
-      "onError": "return",
-      "key": "Enter"
-    },
-    {
-      "action": "waitForSelector",
-      "selector": {
-        "type": "xpath",
-        "value": "//input[@type=\"password\"]"
-      },
-      "timeout": 5,
-      "onError": "return"
-    },
-    {
-      "action": "type",
-      "selector": {
-        "type": "xpath",
-        "value": "//input[@type=\"password\"]"
-      },
-      "delay": 0.15,
-      "onError": "return",
-      "text": None
-    },
-    {
-      "action": "keyPress",
-      "onError": "return",
-      "key": "Enter"
-    },
-    {
-      "action": "waitForSelector",
-      "selector": {
-        "type": "xpath",
-        "value": "//*[@id=\"root\"]/section/div/div[2]/button[2]"
-      },
-      "timeout": 5,
-      "onError": "return"
-    },
-    {
-      "action": "click",
-      "selector": {
-        "type": "xpath",
-        "value": "//*[@id=\"root\"]/section/div/div[2]/button[2]"
-      },
-      "delay": 0.5,
-      "button": "left",
       "onError": "return"
     },
     {
       "action": "waitForTimeout",
-      "timeout": 1,
-      "onError": "continue"
-    },
-    {
-      "action": "waitForSelector",
-      "selector": {
-        "type": "xpath",
-        "value": "//*[@id=\"latest-stories\"]/article[1]/div[2]/div[2]/h2/a"
-      },
       "timeout": 5,
       "onError": "continue"
     },
@@ -160,7 +83,6 @@ article_r_json = {
       "action": "scrollBottom"
     }
   ],
-  "javascript": True,
 }
 
 lock = threading.Lock()
@@ -168,8 +90,8 @@ lock = threading.Lock()
 def get_secret_data():
 
     key = os.getenv('ZYTE_KEY')
-    email = os.getenv('WSJ_EMAIL')
-    passw = os.getenv('WSJ_PASS')
+    email = os.getenv('NYT_EMAIL')
+    passw = os.getenv('NYT_PASS')
 
 
     return email, passw, key
@@ -179,8 +101,8 @@ def create_json(r_type:str, data_json:dict, email:str=None, passw:str=None, arti
     if r_type == "article":
 
         data_json["url"] = article_url
-        data_json["actions"][4]["text"] = email
-        data_json["actions"][7]["text"] = passw.replace("\\", "")
+        data_json["actions"][1]["args"]["email"] = email
+        data_json["actions"][1]["args"]["pass"] = passw.replace("\\", "")
 
         return data_json
 
@@ -189,7 +111,6 @@ def create_json(r_type:str, data_json:dict, email:str=None, passw:str=None, arti
         return data_json
 
 def scrape_request(key:str, r_json:dict):
-
 
     api_response = requests.post(
     "https://api.zyte.com/v1/extract",
@@ -207,10 +128,7 @@ def parse_articles_raw(articles):
 
     for article in articles:
 
-        if "www.wsj.com/video" not in article.attrs["href"] \
-        and "/news/markets/oil-gold-commodities-futures?page=2" not in article.attrs["href"]:
-
-            article_links.append(article.attrs["href"])
+        article_links.append(f'https://www.nytimes.com{article.find("a").attrs["href"]}')
 
     article_links = set(article_links)
     article_links = list(article_links)
@@ -220,7 +138,7 @@ def parse_articles_raw(articles):
 def extract_articles_url(html_response:str) -> list[str]:
 
     soup = BeautifulSoup(html_response["browserHtml"],"html.parser")
-    all_articles = soup.find("div", id="latest-stories").find_all("a")
+    all_articles = soup.find_all("ol")[0].find_all("li")
 
     articles_url = parse_articles_raw(all_articles)
 
@@ -247,27 +165,21 @@ def get_all_articles_url() -> list[str]:
 
 def get_article_title(s):
 
-    return s.find("h1").text
+    return s.select_one("h1[data-testid='headline']").text
 
 def get_article_content(s):
 
-    section = s.find("section")
-
     content = ""
 
-    for p in section.find_all("p"):
+    for i in s.select('div[data-testid*="companionColumn"]'):
 
-      content += f"{p.text} \n"
+        for j in i.find_all("p"):
 
-    return content
+            content += f"{j}\n"
 
 def extract_article_information(html_response:str, url:str) -> dict:
 
     soup = BeautifulSoup(html_response["browserHtml"],"html.parser")
-
-    if soup.find("div", id="cx-snippet-overlay-container"):
-
-      raise Exception("Was not able to log in correctly")
     
     title = get_article_title(soup)
     content = get_article_content(soup)
@@ -305,9 +217,9 @@ def get_article_information(article_url:str) -> dict:
 
 def excecute_scraping() -> list[dict]:
 
-    logging.info("[WSJ] " + f"LOGGING TIME: {datetime.now()}",)
+    logging.info("[NYT] " +f"LOGGING TIME: {datetime.now()}",)
 
-    logging.info("[WSJ] " + "[Articles Url] Starting scraping process")
+    logging.info("[NYT] " +"[Articles Url] Starting scraping process")
 
     articles_url = set(get_all_articles_url())
  
@@ -323,16 +235,16 @@ def excecute_scraping() -> list[dict]:
 
     new_articles_url = articles_url - get_links_from_xml("RSS/feed.xml")
 
-    logging.info("[WSJ] " + "[Articles Url] Extracted successfully\n")
+    logging.info("[NYT] " +"[Articles Url] Extracted successfully\n")
 
 
-    logging.info("[WSJ] " + "[Articles Info] Starting scraping process")
+    logging.info("[NYT] " +"[Articles Info] Starting scraping process")
 
     with ThreadPoolExecutor() as executor:
         jobs = []
         all_articles_info = []
 
-        logging.info("[WSJ] " + new_articles_url)
+        logging.info("[NYT] " +new_articles_url)
 
         for url in new_articles_url:
 
@@ -342,10 +254,9 @@ def excecute_scraping() -> list[dict]:
             result = job.result()
             all_articles_info.append(result)
 
-    logging.info("[WSJ] " + "[Articles Info] Extracted successfully\n")
+    logging.info("[NYT] " +"[Articles Info] Extracted successfully\n")
 
     return all_articles_info
-
 
 def run():
 
@@ -353,19 +264,19 @@ def run():
 
         all_articles_info = excecute_scraping()
 
-        logging.info("[WSJ] " + "[Adding To Feed] Starting...")
+        logging.info("[NYT] " +"[Adding To Feed] Starting...")
 
         for item in all_articles_info:
 
-            logging.info("[WSJ] " + f"[Adding To Feed] Adding Item: {item['link']}")
+            logging.info("[NYT] " +f"[Adding To Feed] Adding Item: {item['link']}")
 
         add_new_items_to_feed("RSS/feed.xml", all_articles_info)
 
-        logging.info("[WSJ] " + "[Adding To Feed] Added successfully\n")
+        logging.info("[NYT] " +"[Adding To Feed] Added successfully\n")
 
     except Exception as e:
 
-        logging.info("[WSJ] " + f"[ERROR] Check scraping process, error: {e}")
+        logging.info("[NYT] " +f"[ERROR] Check scraping process, error: {e}")
 
 if __name__ == "__main__":
 
